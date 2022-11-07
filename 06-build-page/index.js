@@ -18,7 +18,7 @@ async function buildPage(folderName) {
   }
 }
 
-async function readFromFile(filePath) {
+function readFromFile(filePath) {
   const fs = require('fs');
 
   return new Promise((resolve, reject) => {
@@ -43,19 +43,16 @@ async function createHtml(templateFile, componentsFolder, targetFolder, targetFi
     const targetFilePath = path.join(__dirname, targetFolder, targetFile);
 
     let template = await readFromFile(templateFilePath);
-    const components = new Map();
     const folderContents = await readdir(componentsFolderPath, { withFileTypes: true });
     for await (const item of folderContents) {
       const filePath = path.join(componentsFolderPath, item.name);
       if (item.isFile() && path.extname(filePath) === '.html') {
-        const fileName = item.name.slice(0, item.name.lastIndexOf('.'));
-        const component = await readFromFile(filePath);
-        components.set(fileName, component);
-      }
-    }
-    for await (const component of components.keys()) {
-      if (template.indexOf(`{{${component}}}`) !== -1) {
-        template = template.replaceAll(`{{${component}}}`, components.get(component));
+        // const fileName = item.name.slice(0, item.name.lastIndexOf('.'));
+        const fileName = path.parse(filePath).name;
+        const fileContents = await readFromFile(filePath);
+        if (template.indexOf(`{{${fileName}}}`) !== -1) {
+          template = template.replaceAll(`{{${fileName}}}`, fileContents);
+        }
       }
     }
     const output = fs.createWriteStream(targetFilePath);
